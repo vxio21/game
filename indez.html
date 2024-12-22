@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voxel World</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Initialize scene, camera, and renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Add light
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 5, 5).normalize();
+        scene.add(light);
+
+        // Create a basic block
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
+        const blocks = [];
+
+        // Function to add a block at a given position
+        function addBlock(x, y, z) {
+            const block = new THREE.Mesh(geometry, material);
+            block.position.set(x, y, z);
+            scene.add(block);
+            blocks.push(block);
+        }
+
+        // Add some initial blocks
+        for (let x = -5; x < 5; x++) {
+            for (let z = -5; z < 5; z++) {
+                addBlock(x, 0, z);
+            }
+        }
+
+        // Adjust camera position
+        camera.position.y = 5;
+        camera.position.z = 10;
+        camera.lookAt(0, 0, 0);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Render loop
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle user input for placing blocks
+        document.addEventListener('click', (event) => {
+            const mouse = new THREE.Vector2(
+                (event.clientX / window.innerWidth) * 2 - 1,
+                -(event.clientY / window.innerHeight) * 2 + 1
+            );
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(blocks);
+
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                const position = intersect.point.clone().floor().addScalar(0.5);
+                addBlock(position.x, position.y + 1, position.z);
+            }
+        });
+    </script>
+</body>
+</html>
